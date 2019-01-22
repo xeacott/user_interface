@@ -22,11 +22,13 @@
             android:id="@+id/action_start_session"
             android:orderInCategory="4"
             android:title="@string/action_start_session"
+            android:onClick="onStartSessionClick"
             app:showAsAction="never" />
         <item
             android:id="@+id/action_end_session"
             android:orderInCategory="5"
             android:title="@string/action_end_session"
+            android:onClick="onEndSessionClick"
             app:showAsAction="never" />
     </group>
 

@@ -1,5 +1,6 @@
 package com.example.user_interface;
 
+import android.content.Intent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.view.MenuCompat;
@@ -17,7 +18,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
+import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,6 +38,9 @@ public class MainActivity extends AppCompatActivity {
      * The {@link ViewPager} that will host the section contents.
      */
     private ViewPager mViewPager;
+    public static final String EXTRA_MESSAGE = "com.example.user_interface.MESSAGE";
+    public boolean electro__graph_bool= false;
+    public boolean pulseox_graph_bool = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,6 +68,19 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    public void onStartSessionClick(MenuItem item) {
+        Intent intent = new Intent(this, DisplayMessageActivity.class);
+        EditText editText = (EditText) findViewById(R.id.action_start_session);
+        String message = item.toString();
+        intent.putExtra(EXTRA_MESSAGE, message);
+        startActivity(intent);
+    }
+
+    public void onEndSessionClick(MenuItem item) {
+        Toast toast = Toast.makeText(this, "Session has ended!", Toast.LENGTH_LONG);
+        toast.show();
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -78,15 +97,35 @@ public class MainActivity extends AppCompatActivity {
         // as you specify a parent activity in AndroidManifest.xml.
         switch(item.getItemId()) {
             case R.id.action_bluetooth_menu:
+                // Call method to open bluetooth menu
+                return true;
             case R.id.action_start_session:
+                return true;
             case R.id.action_end_session:
+                // Call method to end a session
+                return true;
+            case R.id.action_checkbox_ekg:
+
+                if (item.isChecked()) {
+                    item.setChecked(false);
+                    electro__graph_bool = false;
+                }
+                else {
+                    item.setChecked(true);
+                    electro__graph_bool = true;
+                }
                 return true;
 
-            case R.id.action_checkbox_ekg:
             case R.id.action_checkbox_pulse_ox:
 
-                if (item.isChecked()) item.setChecked(false);
-                else item.setChecked(true);
+                if (item.isChecked()) {
+                    item.setChecked(false);
+                    pulseox_graph_bool = false;
+                }
+                else {
+                    item.setChecked(true);
+                    pulseox_graph_bool = true;
+                }
                 return true;
 
             default:
