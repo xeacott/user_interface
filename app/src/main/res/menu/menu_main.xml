@@ -2,9 +2,40 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="com.example.user_interface.MainActivity">
-    <item
-        android:id="@+id/action_settings"
-        android:orderInCategory="100"
-        android:title="@string/action_settings"
-        app:showAsAction="never" />
+    <group android:id="@+id/Analytics">
+        <item
+            android:id="@+id/action_checkbox_ekg"
+            android:orderInCategory="1"
+            android:checkable="true"
+            android:title="@string/action_checkbox_ekg"
+            app:showAsAction="never" />
+        <item
+            android:id="@+id/action_checkbox_pulse_ox"
+            android:orderInCategory="2"
+            android:checkable="true"
+            android:title="@string/action_checkbox_pulse_ox"
+            app:showAsAction="never" />
+    </group>
+
+    <group android:id="@+id/Session">
+        <item
+            android:id="@+id/action_start_session"
+            android:orderInCategory="4"
+            android:title="@string/action_start_session"
+            app:showAsAction="never" />
+        <item
+            android:id="@+id/action_end_session"
+            android:orderInCategory="5"
+            android:title="@string/action_end_session"
+            app:showAsAction="never" />
+    </group>
+
+    <group android:id="@+id/Configuration">
+        <item
+            android:id="@+id/action_bluetooth_menu"
+            android:orderInCategory="3"
+            android:title="@string/action_bluetooth_menu"
+            app:showAsAction="never" />
+    </group>
+
 </menu>
