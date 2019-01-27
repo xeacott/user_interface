@@ -183,7 +183,8 @@ public class MainActivity extends AppCompatActivity {
                                 @Override
                                 public void run() {
                                     // This is the exact spot where the UI can be updated in real time
-                                    // without slowing down the UI because this is a thread safe method.
+                                    // without slowing down the UI.
+                                    // See: https://developer.android.com/guide/components/processes-and-threads#java
                                     view_data.setText(incomingMessage);
                                 }
                             });
