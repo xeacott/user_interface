@@ -47,7 +47,6 @@ public class MainActivity extends AppCompatActivity {
     private Handler handler;
     ConnectedThread mConnectedThread;
 
-
     // Widget information
     String TAG = "MainActivity";
     EditText send_data;
@@ -77,7 +76,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Open a socket using a thread.
+    /*
+     Open a socket using a thread.
+     This thread is responsible for maintaining the BTconnection, sending the data,
+     and receiving incoming data through input/output streams.
+      */
+
     // Note:: This is a thread that establishes the socket to open the connection
     private class ConnectThread extends Thread {
 
@@ -159,23 +163,35 @@ public class MainActivity extends AppCompatActivity {
         public void run() {
             byte[] buffer = new byte[1024];  // buffer store for the stream
 
-            int bytes; // bytes returned from read()
+            int begin = 0;
+            int bytes = 0; // bytes returned from read()
             while (true) {
                 // Read from the InputStream
                 try {
-                    bytes = mmInStream.read(buffer);
-                    final String incomingMessage = new String(buffer, 0, bytes);
-                    Log.d(TAG, "InputStream: " + incomingMessage);
+                    bytes += mmInStream.read(buffer, bytes, buffer.length - bytes);
+                    for(int i = begin; i < bytes; i++) {
+                        if(buffer[i] == "#".getBytes()[0]) {
+                            final String incomingMessage = new String(buffer, 0, bytes);
+                            Log.d(TAG, "InputStream: " + incomingMessage);
 
-                    // Call this externally to update graphs with incoming messages
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            view_data.setText(incomingMessage);
+                            /*
+                            Runs the specified action on the UI thread. If the current thread is the UI
+                            thread, then the action is executed immediately. If the current thread is
+                            not the UI thread, the action is posted to the event queue of the UI thread.
+                            */
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // This is the exact spot where the UI can be updated in real time
+                                    // without slowing down the UI because this is a thread safe method.
+                                    view_data.setText(incomingMessage);
+                                }
+                            });
+                            begin = i +1;
+                            if(i == bytes -1) {bytes = 0; begin = 0;
+                                }
+                            }
                         }
-                    });
-
-
                 } catch (IOException e) {
                     Log.e(TAG, "write: Error reading Input Stream. " + e.getMessage());
                     break;
@@ -217,12 +233,19 @@ public class MainActivity extends AppCompatActivity {
     /*
     This method will send a message directly to the connected device and is currently unhooked.
     It may be used to end a session, change parameters on the fly, etc.
+    This is the handle to the input stream from the live socket.
      */
     public void SendMessage(View v) {
         byte[] bytes = send_data.getText().toString().getBytes(Charset.defaultCharset());
         mConnectedThread.write(bytes);
     }
 
+    /*
+
+    AcceptThread is responsible for listening to incoming connections exclusively.
+    This thread must be started prior to ConnectThread.
+
+     */
 
     private class AcceptThread extends Thread {
 
