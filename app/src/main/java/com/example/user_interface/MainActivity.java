@@ -27,6 +27,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -73,7 +77,7 @@ public class MainActivity extends AppCompatActivity {
             // Pass the paired device to create a socket between devices
             BluetoothSocket tmp = null;
             try {
-                tmp = mDevice.createInsecureRfcommSocketToServiceRecord(MY_UUID_INSECURE);
+                tmp = mDevice.createRfcommSocketToServiceRecord(MY_UUID_INSECURE);
             } catch (IOException e) {
                 Toast.makeText(this, "Could not establish socket, check UUID", Toast.LENGTH_SHORT).show();
             }
@@ -117,8 +121,8 @@ public class MainActivity extends AppCompatActivity {
 
             // Obtain a handle to the socket's input and output streams
             try {
-                tmpIn = socket.getInputStream();
-                tmpOut = socket.getOutputStream();
+                tmpIn = mmSocket.getInputStream();
+                tmpOut = mmSocket.getOutputStream();
             } catch (IOException e) {
             }
             mmInStream = tmpIn;
@@ -332,8 +336,43 @@ public class MainActivity extends AppCompatActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-            TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-            textView.setText(getString(R.string.section_format, getArguments().getInt(ARG_SECTION_NUMBER)));
+
+            // Fragment 1
+            if (getArguments().getInt(ARG_SECTION_NUMBER) == 1) {
+                // Set the header text for the fragment
+                TextView textView = (TextView) rootView.findViewById(R.id.section_label);
+                textView.setText(getString(R.string.section_format, getString(R.string.electro_cardiograph), 25));
+
+                // Draw the graph
+                GraphView graph = (GraphView) rootView.findViewById(R.id.graph);
+                LineGraphSeries<DataPoint> series = new LineGraphSeries<>(new DataPoint[] {
+                        new DataPoint(0, 1),
+                        new DataPoint(1, 5),
+                        new DataPoint(2, 3),
+                        new DataPoint(3, 2),
+                        new DataPoint(4, 6)
+                });
+                graph.addSeries(series);
+            }
+
+            // Fragment 2
+            if (getArguments().getInt(ARG_SECTION_NUMBER) == 2) {
+                // Set the header text for the fragment
+                TextView textView = (TextView) rootView.findViewById(R.id.section_label);
+                textView.setText(getString(R.string.section_format, getString(R.string.pulse_oximetry), 1200));
+
+                // Draw the graph
+                GraphView graph = (GraphView) rootView.findViewById(R.id.graph);
+                LineGraphSeries<DataPoint> series = new LineGraphSeries<>(new DataPoint[] {
+                        new DataPoint(0, 1),
+                        new DataPoint(1, 5),
+                        new DataPoint(2, 3),
+                        new DataPoint(3, 2),
+                        new DataPoint(4, 6)
+                });
+                graph.addSeries(series);
+            }
+
             return rootView;
         }
     }
@@ -353,8 +392,8 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public int getCount() {
-            // Show 3 total pages.
-            return 3;
+            // Show 2 total pages.
+            return 2;
         }
     }
 }

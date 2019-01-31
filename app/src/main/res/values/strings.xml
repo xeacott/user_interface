@@ -11,7 +11,7 @@
 
     <string name="group_config">Configuration</string>
     <string name="action_bluetooth_menu">Bluetooth Settings...</string>
-    <string name="section_format">Hello World from section: %1$d</string>
+    <string name="section_format">Viewing %1$s \nUpdate rate: %2$d internals</string>
 
     <string name="textview">TextView</string>
 
