@@ -1,5 +1,6 @@
 package com.example.user_interface;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -28,6 +29,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.helper.StaticLabelsFormatter;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
@@ -35,6 +37,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -311,25 +314,77 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public static class PlaceholderFragment extends Fragment {
-        /**
-         * The fragment argument representing the section number for this
-         * fragment.
-         */
+
+        public LineGraphSeries<DataPoint> mSeries1;
+        public LineGraphSeries<DataPoint> mSeries2;
+        final Handler mHandler = new Handler();
+        public double graph2LastXValue = 5d;
         private static final String ARG_SECTION_NUMBER = "section_number";
 
-        public PlaceholderFragment() {
-        }
+        public PlaceholderFragment() { }
 
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
         public static PlaceholderFragment newInstance(int sectionNumber) {
             PlaceholderFragment fragment = new PlaceholderFragment();
             Bundle args = new Bundle();
             args.putInt(ARG_SECTION_NUMBER, sectionNumber);
             fragment.setArguments(args);
             return fragment;
+        }
+
+        private DataPoint[] generateData() {
+            int count = 30;
+            DataPoint[] values = new DataPoint[count];
+            for (int i = 0; i < count; i++) {
+                double x = i;
+                double f = mRand.nextDouble()*0.15+0.3;
+                double y = Math.sin(i*f+2) + mRand.nextDouble()*0.3;
+                DataPoint v = new DataPoint(x, y);
+                values[i] = v;
+            }
+            return values;
+        }
+
+        double mLastRandom = 2;
+        Random mRand = new Random();
+        private double getRandom() {
+            return mLastRandom += mRand.nextDouble()*0.5 - 0.25;
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+
+            /*
+            Runnable that will call resetData() on series 1 set.
+            This is to demonstrate resetData method which resets the whole data,
+            so the current data will be replaced with the new set.
+             */
+            Runnable mTimer1 = new Runnable() {
+                @Override
+                public void run() {
+                    mSeries1.resetData(generateData());
+                    mHandler.postDelayed(this, 300);
+                }
+            };
+            mHandler.postDelayed(mTimer1, 300);
+
+            /*
+            Runnable that will call appendData() on series 2 set.
+            This is to demonstrate appendData method which will add a single data set
+            to the current data.
+
+            This call allows us to use scrollToEnd flag, which auto-scrolls the GraphView
+            to automatically view the last X value to the data set.
+             */
+            Runnable mTimer2 = new Runnable() {
+                @Override
+                public void run() {
+                    graph2LastXValue += 1d;
+                    mSeries2.appendData(new DataPoint(graph2LastXValue, getRandom()), true, 40);
+                    mHandler.postDelayed(this, 200);
+                }
+            };
+            mHandler.postDelayed(mTimer2, 1000);
         }
 
         @Override
@@ -345,14 +400,17 @@ public class MainActivity extends AppCompatActivity {
 
                 // Draw the graph
                 GraphView graph = (GraphView) rootView.findViewById(R.id.graph);
-                LineGraphSeries<DataPoint> series = new LineGraphSeries<>(new DataPoint[] {
-                        new DataPoint(0, 1),
-                        new DataPoint(1, 5),
-                        new DataPoint(2, 3),
-                        new DataPoint(3, 2),
-                        new DataPoint(4, 6)
-                });
-                graph.addSeries(series);
+                mSeries1 = new LineGraphSeries<>(generateData());
+                graph.addSeries(mSeries1);
+
+                GraphView graph2 = (GraphView) rootView.findViewById(R.id.graph2);
+                mSeries2 = new LineGraphSeries<>();
+                graph2.addSeries(mSeries2);
+                graph2.getViewport().setXAxisBoundsManual(true);
+                graph2.getViewport().setScalable(true);
+                graph2.getViewport().setMinX(0);
+                graph2.getViewport().setMaxX(40);
+
             }
 
             // Fragment 2
@@ -363,19 +421,21 @@ public class MainActivity extends AppCompatActivity {
 
                 // Draw the graph
                 GraphView graph = (GraphView) rootView.findViewById(R.id.graph);
-                LineGraphSeries<DataPoint> series = new LineGraphSeries<>(new DataPoint[] {
-                        new DataPoint(0, 1),
-                        new DataPoint(1, 5),
-                        new DataPoint(2, 3),
-                        new DataPoint(3, 2),
-                        new DataPoint(4, 6)
-                });
-                graph.addSeries(series);
+                mSeries1 = new LineGraphSeries<>(generateData());
+                graph.addSeries(mSeries1);
+
+                GraphView graph2 = (GraphView) rootView.findViewById(R.id.graph2);
+                mSeries2 = new LineGraphSeries<>();
+                graph2.addSeries(mSeries2);
+                graph2.getViewport().setXAxisBoundsManual(true);
+                graph2.getViewport().setMinX(0);
+                graph2.getViewport().setMaxX(40);
             }
 
             return rootView;
         }
     }
+
 
     public class SectionsPagerAdapter extends FragmentPagerAdapter {
 
