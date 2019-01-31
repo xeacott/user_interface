@@ -1,6 +1,5 @@
 package com.example.user_interface;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -29,9 +28,11 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.helper.StaticLabelsFormatter;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -48,20 +49,27 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothDevice mDevice;
     private BluetoothSocket mSocket;
     private static final UUID MY_UUID_INSECURE = UUID.fromString("8ce255c0-200a-11e0-ac64-0800200c9a66");
-    private Handler handler;
     ConnectedThread mConnectedThread;
 
     // Widget information
     static String TAG = "MainActivity";
     EditText send_data;
-    TextView view_data;
-    StringBuilder messages;
 
     public boolean electro__graph_bool= false;
     public boolean pulseox_graph_bool = false;
 
     // Create a bluetooth adapter to get the devices bluetooth adapter
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+    // Define event that will post event to subscriber
+    public class MessageEvent {
+
+        public final String message;
+
+        public MessageEvent(String message) {
+            this.message = message;
+        }
+    }
 
     /*
     This hooks to "Establish Connection" UI button is Start Session. In order to begin
@@ -134,9 +142,10 @@ public class MainActivity extends AppCompatActivity {
 
         public void run() {
             byte[] buffer = new byte[1024];  // buffer store for the stream
-
+            final Handler handler = new Handler();
             int begin = 0;
             int bytes = 0; // bytes returned from read()
+
             while (true) {
                 // Read from the InputStream
                 try {
@@ -145,21 +154,15 @@ public class MainActivity extends AppCompatActivity {
                         if(buffer[i] == "#".getBytes()[0]) {
                             final String incomingMessage = new String(buffer, 0, bytes);
                             Log.d(TAG, "InputStream: " + incomingMessage);
-
-                            /*
-                            Runs the specified action on the UI thread. If the current thread is the UI
-                            thread, then the action is executed immediately. If the current thread is
-                            not the UI thread, the action is posted to the event queue of the UI thread.
-                            */
-                            runOnUiThread(new Runnable() {
+                            // Runnable will run every 100 mSec to post a new incoming message
+                            // to the event bus
+                            final Runnable r = new Runnable() {
                                 @Override
                                 public void run() {
-                                    // This is the exact spot where the UI can be updated in real time
-                                    // without slowing down the UI.
-                                    // See: https://developer.android.com/guide/components/processes-and-threads#java
-                                    view_data.setText(incomingMessage);
+                                    EventBus.getDefault().post(new MessageEvent(incomingMessage));
                                 }
-                            });
+                            };
+                            handler.postDelayed(r, 100);
                             begin = i +1;
                             if(i == bytes -1) {bytes = 0; begin = 0;
                                 }
@@ -205,6 +208,7 @@ public class MainActivity extends AppCompatActivity {
         mConnectedThread.cancel();
     }
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -239,6 +243,7 @@ public class MainActivity extends AppCompatActivity {
             startActivityForResult(enableBtIntent, 1);
         }
     }
+
     public void onStartSessionClick(MenuItem item) {
         Intent intent = new Intent(this, DisplayMessageActivity.class);
         EditText editText = (EditText) findViewById(R.id.action_start_session);
@@ -385,6 +390,20 @@ public class MainActivity extends AppCompatActivity {
                 }
             };
             mHandler.postDelayed(mTimer2, 1000);
+        }
+
+        // Make the fragment subscribe to the EventBus
+        @Subscribe
+        public void MessageEvent(MessageEvent event) {
+            // This is where the data from bluetooth will be.
+            Toast.makeText(getActivity(), event.message, Toast.LENGTH_LONG).show();
+        }
+
+        // Register the fragment to the bus
+        @Override
+        public void onStart() {
+            super.onStart();
+            EventBus.getDefault().register(this);
         }
 
         @Override
