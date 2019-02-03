@@ -1,23 +1,51 @@
 package com.example.user_interface;
 
 
+import com.jjoe64.graphview.series.DataPoint;
+
 public class Analytics {
 
-    public Analytics(String data, int id) throws Exception {
-        this.data = data;
-        this.id = id;
+    private static Analytics instance = new Analytics();
+
+    public static Analytics getInstance() {
+        return instance;
     }
 
-    public String getData() {
-        return data;
+    public static void setInstance(Analytics instance) {
+        Analytics.instance = instance;
     }
 
-    public Integer getId() {
-        return id;
+    private String bluetooth_event;
+    private DataPoint single_data_point;
+
+    private Analytics() {}
+
+    public String getBluetooth_event() {
+        return bluetooth_event;
     }
 
-    // PRIVATE
+    public DataPoint getSingle_data_point() {
+        return single_data_point;
+    }
 
-    private final String data;
-    private final Integer id;
+    public void setBluetooth_event(String bluetooth_event) {
+        this.bluetooth_event = bluetooth_event;
+    }
+
+    public void setSingle_data_point(DataPoint value) {
+        this.single_data_point = value;
+    }
+
+    public void convertString() {
+        String[] test = new String[0];
+        double x_value, y_value;
+
+        test = getBluetooth_event().split(".");
+
+        x_value = Double.parseDouble(test[0]);
+        y_value = Double.parseDouble(test[1]);
+
+        setSingle_data_point(x_value, y_value);
+    }
+
 }

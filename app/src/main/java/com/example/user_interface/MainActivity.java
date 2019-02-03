@@ -42,6 +42,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
+
 public class MainActivity extends AppCompatActivity {
 
     private SectionsPagerAdapter mSectionsPagerAdapter;
@@ -61,6 +62,19 @@ public class MainActivity extends AppCompatActivity {
     // Create a bluetooth adapter to get the devices bluetooth adapter
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
+    private void generateData() {
+        int count = 30;
+        for (int i = 0; i < count; i++) {
+            double x = i;
+            double f = mRand.nextDouble()*0.15+0.3;
+            double y = Math.sin(i*f+2) + mRand.nextDouble()*0.3;
+            String test_x = x+"";
+            String test_y = y+"";
+            String test = test_x + "" + test_y;
+            EventBus.getDefault().post(new MessageEvent(test));
+        }
+    }
+
     // Define event that will post event to subscriber
     public class MessageEvent {
 
@@ -70,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
             this.message = message;
         }
     }
+
 
     /*
     This hooks to "Establish Connection" UI button is Start Session. In order to begin
@@ -159,7 +174,7 @@ public class MainActivity extends AppCompatActivity {
                             final Runnable r = new Runnable() {
                                 @Override
                                 public void run() {
-                                    EventBus.getDefault().post(new MessageEvent(incomingMessage));
+                                    generateData();
                                 }
                             };
                             handler.postDelayed(r, 100);
@@ -325,6 +340,7 @@ public class MainActivity extends AppCompatActivity {
         final Handler mHandler = new Handler();
         public double graph2LastXValue = 5d;
         private static final String ARG_SECTION_NUMBER = "section_number";
+        Analytics sharedData = Analytics.getInstance();
 
         public PlaceholderFragment() { }
 
@@ -334,19 +350,6 @@ public class MainActivity extends AppCompatActivity {
             args.putInt(ARG_SECTION_NUMBER, sectionNumber);
             fragment.setArguments(args);
             return fragment;
-        }
-
-        private DataPoint[] generateData() {
-            int count = 30;
-            DataPoint[] values = new DataPoint[count];
-            for (int i = 0; i < count; i++) {
-                double x = i;
-                double f = mRand.nextDouble()*0.15+0.3;
-                double y = Math.sin(i*f+2) + mRand.nextDouble()*0.3;
-                DataPoint v = new DataPoint(x, y);
-                values[i] = v;
-            }
-            return values;
         }
 
         double mLastRandom = 2;
@@ -367,7 +370,9 @@ public class MainActivity extends AppCompatActivity {
             Runnable mTimer1 = new Runnable() {
                 @Override
                 public void run() {
-                    mSeries1.resetData(generateData());
+
+                    // TODO fix me
+//                    mSeries1.resetData();
                     mHandler.postDelayed(this, 300);
                 }
             };
@@ -392,18 +397,18 @@ public class MainActivity extends AppCompatActivity {
             mHandler.postDelayed(mTimer2, 1000);
         }
 
-        // Make the fragment subscribe to the EventBus
-        @Subscribe
-        public void MessageEvent(MessageEvent event) {
-            // This is where the data from bluetooth will be.
-            Toast.makeText(getActivity(), event.message, Toast.LENGTH_LONG).show();
-        }
-
         // Register the fragment to the bus
         @Override
         public void onStart() {
             super.onStart();
             EventBus.getDefault().register(this);
+        }
+
+        // Make the fragment subscribe to the EventBus
+        @Subscribe
+        public void MessageEvent(MessageEvent event) {
+            // This is where the data from bluetooth will be.
+            sharedData.setBluetooth_event(event.message);
         }
 
         @Override
@@ -419,7 +424,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // Draw the graph
                 GraphView graph = (GraphView) rootView.findViewById(R.id.graph);
-                mSeries1 = new LineGraphSeries<>(generateData());
+                mSeries1 = new LineGraphSeries<>();
                 graph.addSeries(mSeries1);
 
                 GraphView graph2 = (GraphView) rootView.findViewById(R.id.graph2);
@@ -429,7 +434,6 @@ public class MainActivity extends AppCompatActivity {
                 graph2.getViewport().setScalable(true);
                 graph2.getViewport().setMinX(0);
                 graph2.getViewport().setMaxX(40);
-
             }
 
             // Fragment 2
@@ -440,7 +444,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // Draw the graph
                 GraphView graph = (GraphView) rootView.findViewById(R.id.graph);
-                mSeries1 = new LineGraphSeries<>(generateData());
+                mSeries1 = new LineGraphSeries<>();
                 graph.addSeries(mSeries1);
 
                 GraphView graph2 = (GraphView) rootView.findViewById(R.id.graph2);
