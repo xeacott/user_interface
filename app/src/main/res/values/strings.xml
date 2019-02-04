@@ -1,5 +1,29 @@
 <resources>
-    <string name="app_name">user_interface</string>
-    <string name="action_settings">Settings</string>
-    <string name="section_format">Hello World from section: %1$d</string>
+    <string name="app_name">Wearable Biosensor Analytics</string>
+
+    <string name="group_analytics">Analytics</string>
+    <string name="action_checkbox_ekg">Electrocardiograph</string>
+    <string name="action_checkbox_pulse_ox">Pulse Oximetry</string>
+
+    <string name="group_session">Session</string>
+    <string name="action_start_session">Start Session</string>
+    <string name="action_end_session">End Session</string>
+
+    <string name="group_config">Configuration</string>
+    <string name="action_bluetooth_menu">Bluetooth Settings...</string>
+    <string name="section_format">Viewing %1$s \nUpdate rate: %2$d internals</string>
+
+    <string name="textview">TextView</string>
+
+    <string name="start_session_hint">Start a Session...</string>
+    <string name="connect_to_wearable_biosensor">Connect To Wearable Biosensor</string>
+    <string name="getting_started">This page will walk you through the steps of starting a fresh
+        session to record analytics from your device. Begin by selecting the sensors you wish to
+        use, then establish a connection with the device.</string>
+    <string name="start_session_sensors">Sensors to collect analytics from.</string>
+    <string name="start_session_setup">Click below to setup connection with the wearable
+        biosensor.</string>
+    <string name="electro_cardiograph">Electro-Cardiograph</string>
+    <string name="pulse_oximetry">Pulse Oximetry</string>
+    <string name="other">Other</string>
 </resources>
