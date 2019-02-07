@@ -62,17 +62,10 @@ public class MainActivity extends AppCompatActivity {
     // Create a bluetooth adapter to get the devices bluetooth adapter
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
-    private void generateData() {
-        int count = 30;
-        for (int i = 0; i < count; i++) {
-            double x = i;
-            double f = mRand.nextDouble()*0.15+0.3;
-            double y = Math.sin(i*f+2) + mRand.nextDouble()*0.3;
-            String test_x = x+"";
-            String test_y = y+"";
-            String test = test_x + "" + test_y;
-            EventBus.getDefault().post(new MessageEvent(test));
-        }
+    double mLastRandom = 2;
+    Random mRand = new Random();
+    private double getRandom() {
+        return mLastRandom += mRand.nextDouble()*0.5 - 0.25;
     }
 
     // Define event that will post event to subscriber
@@ -161,32 +154,33 @@ public class MainActivity extends AppCompatActivity {
             int begin = 0;
             int bytes = 0; // bytes returned from read()
 
-            while (true) {
-                // Read from the InputStream
-                try {
-                    bytes += mmInStream.read(buffer, bytes, buffer.length - bytes);
-                    for(int i = begin; i < bytes; i++) {
-                        if(buffer[i] == "#".getBytes()[0]) {
-                            final String incomingMessage = new String(buffer, 0, bytes);
-                            Log.d(TAG, "InputStream: " + incomingMessage);
-                            // Runnable will run every 100 mSec to post a new incoming message
-                            // to the event bus
-                            final Runnable r = new Runnable() {
-                                @Override
-                                public void run() {
-                                    generateData();
-                                }
-                            };
-                            handler.postDelayed(r, 100);
-                            begin = i +1;
-                            if(i == bytes -1) {bytes = 0; begin = 0;
-                                }
+            // Read from the InputStream
+            while (true) try {
+                bytes += mmInStream.read(buffer, bytes, buffer.length - bytes);
+                for (int i = begin; i < bytes; i++) {
+                    if (buffer[i] == "#".getBytes()[0]) {
+                        final String incomingMessage = new String(buffer, 0, bytes);
+                        Log.d(TAG, "InputStream: " + incomingMessage);
+                        // Runnable will be scheduled every 1000 mSec
+                        final Runnable r = new Runnable() {
+                            @Override
+                            public void run() {
+                                EventBus.getDefault().post(new MessageEvent(incomingMessage));
+                                handler.postDelayed(this, 1000);
                             }
+                        };
+                        handler.postDelayed(r, 100);
+                        begin = i + 1;
+
+                        if (i == bytes - 1) {
+                            bytes = 0;
+                            begin = 0;
                         }
-                } catch (IOException e) {
-                    Log.e(TAG, "write: Error reading Input Stream. " + e.getMessage());
-                    break;
+                    }
                 }
+            } catch (IOException e) {
+                Log.e(TAG, "write: Error reading Input Stream. " + e.getMessage());
+                break;
             }
         }
 
@@ -272,7 +266,6 @@ public class MainActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if(requestCode == 2) {
             pairDevice();
-            //Toast.makeText(this, "Came back from StartSession with params available.", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -352,12 +345,6 @@ public class MainActivity extends AppCompatActivity {
             return fragment;
         }
 
-        double mLastRandom = 2;
-        Random mRand = new Random();
-        private double getRandom() {
-            return mLastRandom += mRand.nextDouble()*0.5 - 0.25;
-        }
-
         @Override
         public void onResume() {
             super.onResume();
@@ -407,8 +394,9 @@ public class MainActivity extends AppCompatActivity {
         // Make the fragment subscribe to the EventBus
         @Subscribe
         public void MessageEvent(MessageEvent event) {
-            // This is where the data from bluetooth will be.
+            // Send the packet to analytics object to begin decode process.
             sharedData.setBluetooth_event(event.message);
+            sharedData.startDecode();
         }
 
         @Override
