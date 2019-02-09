@@ -1,13 +1,14 @@
 package com.example.user_interface;
 
+import android.content.Context;
 import android.content.Intent;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.view.MenuCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 
@@ -28,8 +29,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
-import com.jjoe64.graphview.series.DataPoint;
-import com.jjoe64.graphview.series.LineGraphSeries;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -72,12 +71,10 @@ public class MainActivity extends AppCompatActivity {
     public class MessageEvent {
 
         public final String message;
-
         public MessageEvent(String message) {
             this.message = message;
         }
     }
-
 
     /*
     This hooks to "Establish Connection" UI button is Start Session. In order to begin
@@ -161,6 +158,7 @@ public class MainActivity extends AppCompatActivity {
                     if (buffer[i] == "#".getBytes()[0]) {
                         final String incomingMessage = new String(buffer, 0, bytes);
                         Log.d(TAG, "InputStream: " + incomingMessage);
+
                         // Runnable will be scheduled every 1000 mSec
                         final Runnable r = new Runnable() {
                             @Override
@@ -214,9 +212,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void EndConnection(View v) {
-        mConnectedThread.cancel();
+        if (mConnectedThread != null) {
+            mConnectedThread.cancel();
+            Toast.makeText(this, "Connection Terminated", Toast.LENGTH_LONG).show();
+        }
+
+        else {
+            Toast.makeText(this, "No connection established", Toast.LENGTH_LONG).show();
+        }
     }
 
+    private void showHelpDialog(Context c) {
+        AlertDialog.Builder dialog = new AlertDialog.Builder(c);
+        dialog.setTitle("Getting Started");
+        dialog.setMessage("To start a new session, open the menu in the top right corner" +
+                        "by pressing the Triple Dot button and select 'Start Session'.\n\n" +
+                "If you want to remove me, just long press on the icon!");
+        dialog.create();
+        dialog.show();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -233,12 +247,18 @@ public class MainActivity extends AppCompatActivity {
         mViewPager = (ViewPager) findViewById(R.id.container);
         mViewPager.setAdapter(mSectionsPagerAdapter);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        final FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                showHelpDialog(MainActivity.this);
+            }
+        });
+        fab.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View view) {
+                fab.hide();
+                return true;
             }
         });
 
@@ -270,8 +290,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onEndSessionClick(MenuItem item) {
-        Toast toast = Toast.makeText(this, "Session has ended!", Toast.LENGTH_LONG);
-        toast.show();
+        EndConnection(this.mViewPager);
     }
 
 
@@ -328,12 +347,11 @@ public class MainActivity extends AppCompatActivity {
 
     public static class PlaceholderFragment extends Fragment {
 
-        public LineGraphSeries<DataPoint> mSeries1;
-        public LineGraphSeries<DataPoint> mSeries2;
         final Handler mHandler = new Handler();
-        public double graph2LastXValue = 5d;
         private static final String ARG_SECTION_NUMBER = "section_number";
         Analytics sharedData = Analytics.getInstance();
+        private Runnable mTimer1;
+        private Runnable mTimer2;
 
         public PlaceholderFragment() { }
 
@@ -348,36 +366,21 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onResume() {
             super.onResume();
-
-            /*
-            Runnable that will call resetData() on series 1 set.
-            This is to demonstrate resetData method which resets the whole data,
-            so the current data will be replaced with the new set.
-             */
             Runnable mTimer1 = new Runnable() {
                 @Override
                 public void run() {
-
                     // TODO fix me
-//                    mSeries1.resetData();
+//                  sharedData.hrSeries.appendData();
                     mHandler.postDelayed(this, 300);
                 }
             };
             mHandler.postDelayed(mTimer1, 300);
 
-            /*
-            Runnable that will call appendData() on series 2 set.
-            This is to demonstrate appendData method which will add a single data set
-            to the current data.
-
-            This call allows us to use scrollToEnd flag, which auto-scrolls the GraphView
-            to automatically view the last X value to the data set.
-             */
             Runnable mTimer2 = new Runnable() {
                 @Override
                 public void run() {
-                    graph2LastXValue += 1d;
-                    mSeries2.appendData(new DataPoint(graph2LastXValue, getRandom()), true, 40);
+                    // TODO fix me
+//                  sharedData.hrSeries.appendData();
                     mHandler.postDelayed(this, 200);
                 }
             };
@@ -389,6 +392,19 @@ public class MainActivity extends AppCompatActivity {
         public void onStart() {
             super.onStart();
             EventBus.getDefault().register(this);
+        }
+
+        @Override
+        public void onStop() {
+            EventBus.getDefault().unregister(this);
+            super.onStop();
+        }
+
+        @Override
+        public void onPause() {
+            mHandler.removeCallbacks(mTimer1);
+            mHandler.removeCallbacks(mTimer2);
+            super.onPause();
         }
 
         // Make the fragment subscribe to the EventBus
@@ -406,41 +422,36 @@ public class MainActivity extends AppCompatActivity {
 
             // Fragment 1
             if (getArguments().getInt(ARG_SECTION_NUMBER) == 1) {
-                // Set the header text for the fragment
-                TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-                textView.setText(getString(R.string.section_format, getString(R.string.electro_cardiograph), 25));
+                // Set the header text for EKG
+                TextView EKG = (TextView) rootView.findViewById(R.id.section_label);
+                EKG.setText(getString(R.string.section_format, getString(R.string.electro_cardiograph), 25));
 
                 // Draw the graph
                 GraphView graph = (GraphView) rootView.findViewById(R.id.graph);
-                mSeries1 = new LineGraphSeries<>();
-                graph.addSeries(mSeries1);
+                graph.addSeries(sharedData.hrSeries);
+
+                // Set the header text for Pulse Ox
+                TextView POx = (TextView) rootView.findViewById(R.id.section_label2);
+                POx.setText(getString(R.string.section_format, getString(R.string.pulse_oximetry), 25));
 
                 GraphView graph2 = (GraphView) rootView.findViewById(R.id.graph2);
-                mSeries2 = new LineGraphSeries<>();
-                graph2.addSeries(mSeries2);
+                graph2.addSeries(sharedData.ekgSeries);
                 graph2.getViewport().setXAxisBoundsManual(true);
                 graph2.getViewport().setScalable(true);
                 graph2.getViewport().setMinX(0);
                 graph2.getViewport().setMaxX(40);
+
+                // Set the header text for Heart Rate
+                TextView HR = (TextView) rootView.findViewById(R.id.section_label3);
+                HR.setText(getString(R.string.section_format, getString(R.string.heart_rate), 25));
+
+                GraphView graph3 = (GraphView) rootView.findViewById(R.id.graph3);
+                graph.addSeries(sharedData.pxSeries);
             }
 
             // Fragment 2
             if (getArguments().getInt(ARG_SECTION_NUMBER) == 2) {
-                // Set the header text for the fragment
-                TextView textView = (TextView) rootView.findViewById(R.id.section_label);
-                textView.setText(getString(R.string.section_format, getString(R.string.pulse_oximetry), 1200));
-
-                // Draw the graph
-                GraphView graph = (GraphView) rootView.findViewById(R.id.graph);
-                mSeries1 = new LineGraphSeries<>();
-                graph.addSeries(mSeries1);
-
-                GraphView graph2 = (GraphView) rootView.findViewById(R.id.graph2);
-                mSeries2 = new LineGraphSeries<>();
-                graph2.addSeries(mSeries2);
-                graph2.getViewport().setXAxisBoundsManual(true);
-                graph2.getViewport().setMinX(0);
-                graph2.getViewport().setMaxX(40);
+                // Add diagnostics here
             }
 
             return rootView;
@@ -464,7 +475,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public int getCount() {
             // Show 2 total pages.
-            return 2;
+            return 1;
         }
     }
 }

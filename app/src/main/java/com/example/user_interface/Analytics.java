@@ -1,5 +1,8 @@
 package com.example.user_interface;
 
+import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
+
 import java.util.ArrayList;
 
 public class Analytics {
@@ -18,15 +21,35 @@ public class Analytics {
     }
 
     // Create data type enumerations
-    enum dataType {
-        HR, EKG, POA, POB, POx
+    public enum dataType {
+        HR, EKG, POA, POB, POx;
+
+        public static dataType fromInteger(int pos) {
+            switch(pos) {
+                case 0:
+                    return HR;
+                case 1:
+                    return EKG;
+                case 2:
+                    return POA;
+                case 3:
+                    return POB;
+                case 4:
+                    return POx;
+            }
+            return null;
+        }
     }
 
-    // library of tags
-    public static String[] startTagDef = {"<hr>", "<ekg>", "<POA>", "<POB>", "<POx>"};
-    public static String[] endTagDef = {"<\\hr>", "<\\ekg>", "<\\POA>", "<\\POB>", "<\\POx>"};
+    // Create library of tags
+    private static final String[] TagDef = { "<hr>", "<ekg>", "<POA>", "<POB>", "<POx>"};
+    private static final int maxMemberLength = 2500;
 
-    public static final int maxMemberLength = 2500;
+    // Graph variables
+    private String bluetooth_event;
+    public LineGraphSeries<DataPoint> hrSeries = new LineGraphSeries<>();
+    public LineGraphSeries<DataPoint> ekgSeries = new LineGraphSeries<>();
+    public LineGraphSeries<DataPoint> pxSeries = new LineGraphSeries<>();
 
     // Data containers that are ArrayLists of Doubles
     ArrayList<Double> HR = new ArrayList<>();
@@ -34,8 +57,6 @@ public class Analytics {
     ArrayList<Double> POA = new ArrayList<>();
     ArrayList<Double> POB = new ArrayList<>();
     ArrayList<Double> POx = new ArrayList<>();
-
-    private String bluetooth_event;
 
     // Default Constructor
     private Analytics() {
@@ -50,23 +71,30 @@ public class Analytics {
         this.bluetooth_event = bluetooth_event;
     }
 
+
     public void startDecode() {
-
+        dataDecode(getBluetooth_event());
     }
-
 
     public void dataDecode(String msg) {
         String header = msg.substring(3, 4);
-        String temp = null;
+        String temp;
+        double dataValue;
         byte[] sensorDataStatus = new byte[8];
 
         for (int i = 0; i < 8; i++) {
-            sensorDataStatus[i] = (header >> i) & 1;
+//            sensorDataStatus[i] = (header >> i) & 1;
         }
 
+        // Strip all the newline backslashes to fix string
+        msg = msg.replace("\\", "");
+
+        // Iterate through tag definitions to find the value it corresponds with
         for (int i = 0; i < 5; i++) {
             if(sensorDataStatus[i] == 1) {
-                temp = msg.split(startTagDef[i][1])
+                temp = msg.split(TagDef[i])[1];
+                dataValue = Double.valueOf(temp);
+                StorageUpdate(dataType.fromInteger(i), dataValue);
             }
         }
     }

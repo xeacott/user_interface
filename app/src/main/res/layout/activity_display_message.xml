@@ -7,7 +7,7 @@
     tools:context=".DisplayMessageActivity">
 
     <LinearLayout
-        android:layout_width="308dp"
+        android:layout_width="match_parent"
         android:layout_height="584dp"
         android:layout_marginStart="8dp"
         android:layout_marginTop="8dp"
@@ -40,7 +40,7 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="287dp"
+            android:layout_height="212dp"
             android:orientation="vertical">
 
             <CheckBox
