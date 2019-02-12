@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
@@ -53,19 +52,13 @@ public class MainActivity extends AppCompatActivity {
 
     // Widget information
     static String TAG = "MainActivity";
-    EditText send_data;
+    String send_data;
 
     public boolean electro__graph_bool= false;
     public boolean pulseox_graph_bool = false;
 
     // Create a bluetooth adapter to get the devices bluetooth adapter
     BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-    double mLastRandom = 2;
-    Random mRand = new Random();
-    private double getRandom() {
-        return mLastRandom += mRand.nextDouble()*0.5 - 0.25;
-    }
 
     // Define event that will post event to subscriber
     public class MessageEvent {
@@ -81,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
     collecting information, bluetooth for both devices must be on. This method will
     open a socket over bluetooth to connect each device.
      */
-    public void pairDevice(int ... params) {
+    public void pairDevice() {
 
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
         Log.e("MainActivity", "" + pairedDevices.size());
@@ -146,10 +139,13 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void run() {
-            byte[] buffer = new byte[1024];  // buffer store for the stream
+            // buffer store for the stream
+            byte[] buffer = new byte[1024];
             final Handler handler = new Handler();
+
+            // bytes returned from read()
             int begin = 0;
-            int bytes = 0; // bytes returned from read()
+            int bytes = 0;
 
             // Read from the InputStream
             while (true) try {
@@ -159,15 +155,17 @@ public class MainActivity extends AppCompatActivity {
                         final String incomingMessage = new String(buffer, 0, bytes);
                         Log.d(TAG, "InputStream: " + incomingMessage);
 
-                        // Runnable will be scheduled every 1000 mSec
+                        // Runnable will be scheduled every 500 mSec that will post the message
+                        // on to the eventbus. The eventbus will store the latest message to be
+                        // given to the analytics objects.
                         final Runnable r = new Runnable() {
                             @Override
                             public void run() {
                                 EventBus.getDefault().post(new MessageEvent(incomingMessage));
-                                handler.postDelayed(this, 1000);
+                                handler.postDelayed(this, 6);
                             }
                         };
-                        handler.postDelayed(r, 100);
+                        handler.postDelayed(r, 360);
                         begin = i + 1;
 
                         if (i == bytes - 1) {
@@ -201,14 +199,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /*
-    This method will send a message directly to the connected device and is currently unhooked.
-    It may be used to end a session, change parameters on the fly, etc.
-    This is the handle to the input stream from the live socket.
-     */
     public void SendMessage(View v) {
-        byte[] bytes = send_data.getText().toString().getBytes(Charset.defaultCharset());
-        mConnectedThread.write(bytes);
+        byte[] bytes = send_data.getBytes(Charset.defaultCharset());
+        if (mConnectedThread != null) {
+            mConnectedThread.write(bytes);
+        }
+        else {
+        }
     }
 
     public void EndConnection(View v) {
@@ -273,6 +270,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // Start session begins a new activity with specified intent
     public void onStartSessionClick(MenuItem item) {
         Intent intent = new Intent(this, DisplayMessageActivity.class);
         EditText editText = (EditText) findViewById(R.id.action_start_session);
@@ -281,12 +279,18 @@ public class MainActivity extends AppCompatActivity {
         startActivityForResult(intent, 2);
     }
 
+    // Return from activity with data to control the wearable device
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        Bundle extras = data.getExtras();
+        String sensorData = extras.getString("Sensors Data");
+
         if(requestCode == 2) {
             pairDevice();
         }
+        send_data = sensorData;
+        SendMessage(this.mViewPager);
     }
 
     public void onEndSessionClick(MenuItem item) {
@@ -451,7 +455,7 @@ public class MainActivity extends AppCompatActivity {
 
             // Fragment 2
             if (getArguments().getInt(ARG_SECTION_NUMBER) == 2) {
-                // Add diagnostics here
+                // Add diagnostics here ? Maybe...
             }
 
             return rootView;
