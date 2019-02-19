@@ -3,7 +3,16 @@ package com.example.user_interface;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
+import java.sql.Timestamp;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+
+import static java.lang.System.currentTimeMillis;
 
 public class Analytics {
 
@@ -47,7 +56,6 @@ public class Analytics {
 
     // Graph variables
     private String bluetooth_event;
-    public LineGraphSeries<DataPoint> hrSeries = new LineGraphSeries<>();
     public LineGraphSeries<DataPoint> ekgSeries = new LineGraphSeries<>();
     public LineGraphSeries<DataPoint> pxSeries = new LineGraphSeries<>();
 
@@ -57,6 +65,9 @@ public class Analytics {
     ArrayList<Double> POA = new ArrayList<>();
     ArrayList<Double> POB = new ArrayList<>();
     ArrayList<Double> POx = new ArrayList<>();
+
+    // Global start time
+    public static final long currentTime = currentTimeMillis();
 
     // Default Constructor
     private Analytics() {
@@ -70,7 +81,6 @@ public class Analytics {
     public void setBluetooth_event(String bluetooth_event) {
         this.bluetooth_event = bluetooth_event;
     }
-
 
     public void startDecode() {
         dataDecode(getBluetooth_event());
@@ -132,5 +142,23 @@ public class Analytics {
                 POx.add(DataValue);
                 break;
         }
+    }
+
+    // Check for performance on this... and see if there is a faster way
+    public DataPoint getPoint(dataType type) {
+
+        double dataPoint = -1;
+        double currentTime = ((Analytics.currentTime / 1000) - currentTimeMillis() / 1000);
+
+        if (type == dataType.EKG) {
+            dataPoint = EKG.get(EKG.size() - 1);
+        }
+
+        if (type == dataType.POB) {
+            dataPoint = POB.get(POB.size() - 1);
+        }
+
+        DataPoint point = new DataPoint(dataPoint, currentTime);
+        return point;
     }
 }

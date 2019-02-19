@@ -29,6 +29,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
+import com.jjoe64.graphview.series.DataPoint;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -373,8 +374,7 @@ public class MainActivity extends AppCompatActivity {
             Runnable mTimer1 = new Runnable() {
                 @Override
                 public void run() {
-                    // TODO fix me
-//                  sharedData.hrSeries.appendData();
+                    sharedData.ekgSeries.appendData(sharedData.getPoint(Analytics.dataType.EKG), true, 40);
                     mHandler.postDelayed(this, 300);
                 }
             };
@@ -383,8 +383,7 @@ public class MainActivity extends AppCompatActivity {
             Runnable mTimer2 = new Runnable() {
                 @Override
                 public void run() {
-                    // TODO fix me
-//                  sharedData.hrSeries.appendData();
+                    sharedData.pxSeries.appendData(sharedData.getPoint(Analytics.dataType.POB), true, 40);
                     mHandler.postDelayed(this, 200);
                 }
             };
@@ -430,10 +429,6 @@ public class MainActivity extends AppCompatActivity {
                 TextView EKG = (TextView) rootView.findViewById(R.id.section_label);
                 EKG.setText(getString(R.string.section_format, getString(R.string.electro_cardiograph), 25));
 
-                // Draw the graph
-                GraphView graph = (GraphView) rootView.findViewById(R.id.graph);
-                graph.addSeries(sharedData.hrSeries);
-
                 // Set the header text for Pulse Ox
                 TextView POx = (TextView) rootView.findViewById(R.id.section_label2);
                 POx.setText(getString(R.string.section_format, getString(R.string.pulse_oximetry), 25));
@@ -447,10 +442,10 @@ public class MainActivity extends AppCompatActivity {
 
                 // Set the header text for Heart Rate
                 TextView HR = (TextView) rootView.findViewById(R.id.section_label3);
-                HR.setText(getString(R.string.section_format, getString(R.string.heart_rate), 25));
+                HR.setText(getString(R.string.section_format, getString(R.string.pulse_oximetry), 25));
 
                 GraphView graph3 = (GraphView) rootView.findViewById(R.id.graph3);
-                graph.addSeries(sharedData.pxSeries);
+                graph3.addSeries(sharedData.pxSeries);
             }
 
             // Fragment 2
