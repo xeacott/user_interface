@@ -56,8 +56,6 @@ public class Analytics {
 
     // Graph variables
     private String bluetooth_event;
-    public LineGraphSeries<DataPoint> ekgSeries = new LineGraphSeries<>();
-    public LineGraphSeries<DataPoint> pxSeries = new LineGraphSeries<>();
 
     // Data containers that are ArrayLists of Doubles
     ArrayList<Double> HR = new ArrayList<>();
@@ -145,10 +143,9 @@ public class Analytics {
     }
 
     // Check for performance on this... and see if there is a faster way
-    public DataPoint getPoint(dataType type) {
+    public double getPoint(dataType type) {
 
         double dataPoint = -1;
-        double currentTime = ((Analytics.currentTime / 1000) - currentTimeMillis() / 1000);
 
         if (type == dataType.EKG) {
             dataPoint = EKG.get(EKG.size() - 1);
@@ -158,7 +155,6 @@ public class Analytics {
             dataPoint = POB.get(POB.size() - 1);
         }
 
-        DataPoint point = new DataPoint(dataPoint, currentTime);
-        return point;
+        return dataPoint;
     }
 }

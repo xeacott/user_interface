@@ -30,6 +30,7 @@ import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
+import com.jjoe64.graphview.series.LineGraphSeries;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -358,6 +359,11 @@ public class MainActivity extends AppCompatActivity {
         private Runnable mTimer1;
         private Runnable mTimer2;
 
+        // Graph variables including starting point and LineGraphSeries
+        private double graph2LastXValue = 5d;
+        public LineGraphSeries<DataPoint> ekgSeries = new LineGraphSeries<>();
+        public LineGraphSeries<DataPoint> pxSeries = new LineGraphSeries<>();
+
         public PlaceholderFragment() { }
 
         public static PlaceholderFragment newInstance(int sectionNumber) {
@@ -374,20 +380,22 @@ public class MainActivity extends AppCompatActivity {
             Runnable mTimer1 = new Runnable() {
                 @Override
                 public void run() {
-                    sharedData.ekgSeries.appendData(sharedData.getPoint(Analytics.dataType.EKG), true, 40);
-                    mHandler.postDelayed(this, 300);
+                    graph2LastXValue += 1d;
+                    ekgSeries.appendData(new DataPoint(graph2LastXValue, sharedData.getPoint(Analytics.dataType.EKG)), true, 40);
+                    mHandler.postDelayed(this, 200);
                 }
             };
-            mHandler.postDelayed(mTimer1, 300);
+            mHandler.postDelayed(mTimer1, 100);
 
             Runnable mTimer2 = new Runnable() {
                 @Override
                 public void run() {
-                    sharedData.pxSeries.appendData(sharedData.getPoint(Analytics.dataType.POB), true, 40);
+                    graph2LastXValue += 1d;
+                    pxSeries.appendData(new DataPoint(graph2LastXValue, sharedData.getPoint(Analytics.dataType.POB)), true, 40);
                     mHandler.postDelayed(this, 200);
                 }
             };
-            mHandler.postDelayed(mTimer2, 1000);
+            mHandler.postDelayed(mTimer2, 100);
         }
 
         // Register the fragment to the bus
@@ -434,7 +442,7 @@ public class MainActivity extends AppCompatActivity {
                 POx.setText(getString(R.string.section_format, getString(R.string.pulse_oximetry), 25));
 
                 GraphView graph2 = (GraphView) rootView.findViewById(R.id.graph2);
-                graph2.addSeries(sharedData.ekgSeries);
+                graph2.addSeries(ekgSeries);
                 graph2.getViewport().setXAxisBoundsManual(true);
                 graph2.getViewport().setScalable(true);
                 graph2.getViewport().setMinX(0);
@@ -445,7 +453,7 @@ public class MainActivity extends AppCompatActivity {
                 HR.setText(getString(R.string.section_format, getString(R.string.pulse_oximetry), 25));
 
                 GraphView graph3 = (GraphView) rootView.findViewById(R.id.graph3);
-                graph3.addSeries(sharedData.pxSeries);
+                graph3.addSeries(pxSeries);
             }
 
             // Fragment 2
