@@ -3,6 +3,7 @@ package com.example.user_interface;
 import com.jjoe64.graphview.series.DataPoint;
 import com.jjoe64.graphview.series.LineGraphSeries;
 
+import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -145,14 +146,21 @@ public class Analytics {
     // Check for performance on this... and see if there is a faster way
     public double getPoint(dataType type) {
 
-        double dataPoint = -1;
+        double dataPoint = 0;
 
         if (type == dataType.EKG) {
-            dataPoint = EKG.get(EKG.size() - 1);
+            try {
+                dataPoint = EKG.get(EKG.size() - 1);
+            } catch (ArrayIndexOutOfBoundsException e ) {
+
+            }
         }
 
         if (type == dataType.POB) {
-            dataPoint = POB.get(POB.size() - 1);
+            try {
+                dataPoint = POB.get(POB.size() - 1);
+            } catch (ArrayIndexOutOfBoundsException e ) {
+            }
         }
 
         return dataPoint;
